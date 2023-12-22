@@ -25,8 +25,9 @@ C:\Video\
    - Pics\
       - screenshot.png
       - ...
-   - video_to_be_converted.mp4
-   - ...
+   - Cool videos\
+      - video_to_be_converted.mp4
+      - ...
    - AV1_Encoder.ps1
    - ffmpeg.exe
    - ffprobe.exe
