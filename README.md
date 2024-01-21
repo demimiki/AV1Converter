@@ -1,6 +1,6 @@
 # AV1 Converter
 A PS script for converting to AV1 codec format. Encodes every video in the folder and subfolder to AV1, then saves them in ./Converted/ with "filename.mp4" name. Photos are collected in the ./Pics/ folder.</br>
-It's using the SVT-AV1 library (CPU encode only).
+It's using the SVT-AV1 library (CPU encode only). The audio tracks will be converted to Opus format for further compression.
 
 ## Notes
 There is 2 options inside the script.</br>
@@ -20,8 +20,9 @@ It should look like this:
 ```
 C:\Video\
    - Converted\
-      - converted_video1.mp4
-      - ...
+      - Cool videos\
+         - converted_video1.mp4
+         - ...
    - Pics\
       - screenshot.png
       - ...
