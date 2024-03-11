@@ -73,7 +73,7 @@ foreach ($item in $codecTypeArray){
 	#Output what file been processed
 	Add-Content ./listOfConvertedFiles.txt $outputFile
 	$count++
-	Write-Host "`n$c/$non_av1_fileCount file converted 🕑" -ForegroundColor DarkGreen
+	Write-Host "`n$count/$non_av1_fileCount file converted 🕑" -ForegroundColor DarkGreen
     $index++
 }
 if ($non_av1_fileCount){
