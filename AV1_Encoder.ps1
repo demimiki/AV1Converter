@@ -5,6 +5,11 @@
 # compressionLevel determines the used algorithm for encoding (0-12). Lower values will significantly increase the encoding time, but can further reduce the filesize. Default value is 6
 # Note: encoding will use all available CPU cores. This can't be reduced right now due to limitations in the SVT-AV1 encoding library. Use CPU affinities in task manager to reduce the maximum load
 
+# Changelog
+#
+# Added progress bar to show the progress
+# Now displays the video's total length while encoding
+
 #****************OPTIONS****************#
 
 $targetQuality = 48
@@ -19,18 +24,47 @@ $listOfPhotoFiles = (Get-ChildItem -Path ./ -Recurse -Include *.jpg, *.jpeg, *.p
 
 Out-File -FilePath ./listOfConvertedFiles.txt
 
-#Search for codec format
+#Check if ffmpeg present
+$ffmpeg = (Split-Path -Parent $pwd) + "\ffmpeg.exe"
+if ((Test-Path $ffmpeg -PathType Leaf) -ne $True){
+	$ffmpeg = [String]($pwd) + "\ffmpeg.exe"
+	if ((Test-Path $ffmpeg -PathType Leaf) -ne $True){
+		Write-Host "No ffmpeg found, exiting..."
+		pause
+		Stop-Process -ID $PID -Force
+	}
+}
+
+#Check if ffprobe present
+$ffprobe = (Split-Path -Parent $pwd) + "\ffprobe.exe"
+if ((Test-Path $ffprobe -PathType Leaf) -ne $True){
+	$ffprobe = [String]($pwd) + "\ffprobe.exe"
+	if ((Test-Path $ffprobe -PathType Leaf) -ne $True){
+		Write-Host "No ffprobe found, exiting..."
+		pause
+		Stop-Process -ID $PID -Force
+	}
+}
+
+#Search for codec format and length
 $i=0
 $codecTypeArray = ,0 * $listOfVideoFiles.Count
+$lengthArray = ,0 * $listOfVideoFiles.Count
 
 Write-Host `nFinding mp4 video files and photos
 
 foreach ($videoPath in $listOfVideoFiles){
-    $codecTypeArray[$i] = @(.\ffprobe `
-		-v error `
-		-select_streams v:0 -show_entries stream=codec_name `
-		-of default=noprint_wrappers=1:nokey=1 `
-		$videoPath)
+	$videoPath = '"' + $videoPath + '"'
+    $codecTypeArray[$i] = @(Invoke-Expression ($ffprobe + `
+		" -v error " + `
+		"-select_streams v:0 -show_entries stream=codec_name " + `
+		"-of default=noprint_wrappers=1:nokey=1 " + `
+		$videoPath))
+	$lengthArray[$i] = @(Invoke-Expression ($ffprobe + `
+		" -v error " + `
+		"-select_streams v:0 -show_entries format=duration " + `
+		"-of default=noprint_wrappers=1:nokey=1 " + `
+		$videoPath))
     $i++
 }
 
@@ -66,10 +100,38 @@ foreach ($item in $codecTypeArray){
 		New-Item -Path $outputPath -ItemType Directory -Force | Out-Null
 	}
 	
-	Write-Host "`nWorking on: $outputFile`n"
+	$durationArray = $lengthArray[$index]
+	[int]$duration = $durationArray[0]
+	$second = $duration % 60
+	$duration = $duration - $second
+	[int]$minute = $duration / 60
+	$duration = $duration - ($minute * 60)
+	[int]$hour = $duration / 3600
+	if ($hour -le 9){
+		$length = "0" + [string]$hour
+	}else{
+		$length = [string]$hour
+	}
+	if ($minute -le 9){
+		$length += ":0" + [string]$minute
+	}else{
+		$length += ":" + [string]$minute
+	}
+	if ($second -le 9){
+		$length += ":0" + [string]$second
+	}else{
+		$length += ":" + [string]$second
+	}
 	
-    .\ffmpeg.exe -i $listOfVideoFiles[$index] -v quiet -stats -c:a libopus -b:a 96k -c:v libsvtav1 -preset $compressionLevel -crf $targetQuality $outputFile
-	
+	$out = ((Get-Item $listOfVideoFiles[$index]).Basename) + ".mp4"
+	Write-Host "`nWorking on ($length): $out`n"
+	#Set progress bar sequence format to show progress
+	Write-Host -NoNewline ([char]27 + "]9;4;1;" + [int](($count/$non_av1_fileCount)*100+1) + [char]7)
+	$inPath = $listOfVideoFiles[$index]
+	$inPath = '"' + $inPath + '"'
+	$outputFile = '"' + $outputFile + '"'
+    Start-Process -FilePath $ffmpeg -ArgumentList "-v quiet", "-stats", "-i $inPath", "-c:a libopus", "-b:a 96k", "-c:v libsvtav1", "-preset $compressionLevel", "-crf $targetQuality", $outputFile -Wait -NoNewWindow
+
 	#Output what file been processed
 	Add-Content ./listOfConvertedFiles.txt $outputFile
 	$count++
@@ -107,6 +169,9 @@ if ($count){
 	Write-Host `nNo photo found!
 }
 
+#Set progress bar sequence format to show that the conversion is done
+Write-Host -NoNewline ([char]27 + "]9;4;4;100" + [char]7)
+
 #Clean up empty folders
 Get-ChildItem -Path .\ -Recurse -Force -Directory | 
     Sort-Object -Property FullName -Descending |
@@ -116,3 +181,5 @@ Get-ChildItem -Path .\ -Recurse -Force -Directory |
 Write-Host `nRemoved empty folders`n
 
 pause
+#Set progress bar sequence format back to default state
+Write-Host -NoNewline ([char]27 + "]9;4;0;0" + [char]7)
