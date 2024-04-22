@@ -7,13 +7,14 @@
 
 # Changelog
 #
-# Added progress bar to show the progress
-# Now displays the video's total length while encoding
+# Fixed total hours not displaying correctly
+# Added option to disable the listing of converted files
 
 #****************OPTIONS****************#
 
 $targetQuality = 48
 $compressionLevel = 6
+$saveConvertedFilenames = $False
 
 #***************************************#
 
@@ -22,7 +23,9 @@ $compressionLevel = 6
 $listOfVideoFiles = (Get-ChildItem -Path ./ -Recurse -Include *.mp4, *.mkv | Select-Object -ExpandProperty FullName) -notlike '*Converted*'
 $listOfPhotoFiles = (Get-ChildItem -Path ./ -Recurse -Include *.jpg, *.jpeg, *.png | Select-Object -ExpandProperty FullName) -notlike '*Pics*'
 
-Out-File -FilePath ./listOfConvertedFiles.txt
+if ($saveConvertedFilenames){
+	Out-File -FilePath ./listOfConvertedFiles.txt
+}
 
 #Check if ffmpeg present
 $ffmpeg = (Split-Path -Parent $pwd) + "\ffmpeg.exe"
@@ -104,7 +107,7 @@ foreach ($item in $codecTypeArray){
 	[int]$duration = $durationArray[0]
 	$second = $duration % 60
 	$duration = $duration - $second
-	[int]$minute = $duration / 60
+	[int]$minute = ($duration / 60) % 60
 	$duration = $duration - ($minute * 60)
 	[int]$hour = $duration / 3600
 	if ($hour -le 9){
@@ -131,9 +134,11 @@ foreach ($item in $codecTypeArray){
 	$inPath = '"' + $inPath + '"'
 	$outputFile = '"' + $outputFile + '"'
     Start-Process -FilePath $ffmpeg -ArgumentList "-v quiet", "-stats", "-i $inPath", "-c:a libopus", "-b:a 96k", "-c:v libsvtav1", "-preset $compressionLevel", "-crf $targetQuality", $outputFile -Wait -NoNewWindow
-
-	#Output what file been processed
-	Add-Content ./listOfConvertedFiles.txt $outputFile
+	
+	if ($saveConvertedFilenames){
+		#Output what file been processed
+		Add-Content ./listOfConvertedFiles.txt $outputFile
+	}
 	$count++
 	Write-Host "`n$count/$non_av1_fileCount file converted 🕑" -ForegroundColor DarkGreen
     $index++
