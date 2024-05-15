@@ -7,8 +7,7 @@
 
 # Changelog
 #
-# Fixed total hours not displaying correctly
-# Added option to disable the listing of converted files
+# Now checks if ffmpeg and ffprobe are installed instead of exiting. If they're present in the directory (or sub-directory) it'll still use those files
 
 #****************OPTIONS****************#
 
@@ -27,25 +26,33 @@ if ($saveConvertedFilenames){
 	Out-File -FilePath ./listOfConvertedFiles.txt
 }
 
-#Check if ffmpeg present
+#Check if ffmpeg present in directory, sub-directory or it's installed
 $ffmpeg = (Split-Path -Parent $pwd) + "\ffmpeg.exe"
 if ((Test-Path $ffmpeg -PathType Leaf) -ne $True){
 	$ffmpeg = [String]($pwd) + "\ffmpeg.exe"
 	if ((Test-Path $ffmpeg -PathType Leaf) -ne $True){
-		Write-Host "No ffmpeg found, exiting..."
-		pause
-		Stop-Process -ID $PID -Force
+		if (Get-Command ffmpeg -ErrorAction SilentlyContinue){
+			$ffmpeg="ffmpeg"
+		}else{
+			Write-Host "No ffmpeg found, exiting..."
+			pause
+			Stop-Process -ID $PID -Force
+		}
 	}
 }
 
-#Check if ffprobe present
+#Check if ffprobe present in directory, sub-directory or it's installed
 $ffprobe = (Split-Path -Parent $pwd) + "\ffprobe.exe"
 if ((Test-Path $ffprobe -PathType Leaf) -ne $True){
 	$ffprobe = [String]($pwd) + "\ffprobe.exe"
 	if ((Test-Path $ffprobe -PathType Leaf) -ne $True){
-		Write-Host "No ffprobe found, exiting..."
-		pause
-		Stop-Process -ID $PID -Force
+		if (Get-Command ffprobe -ErrorAction SilentlyContinue){
+			$ffprobe="ffprobe"
+		}else{
+			Write-Host "No ffprobe found, exiting..."
+			pause
+			Stop-Process -ID $PID -Force
+		}
 	}
 }
 
