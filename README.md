@@ -4,8 +4,8 @@ It's using the SVT-AV1 library (CPU encode only). The audio tracks will be conve
 
 ## Notes
 There is 2 options inside the script.</br>
-+ <i>targetQuality</i> modifies the available bitrate (1-63). Most of the time the default 50 value is ideal. Decrease the value if you want higher quality (might not increase quality, while increases filesize)</br>
-+ <i>compressionLevel</i> determines the used algorithm for encoding (0-13). Lower values will significantly increase the encoding time, but can further reduce the filesize. Default value is 7</br>
++ <i>targetQuality</i> modifies the available bitrate (1-63). Most of the time the default 48 value is ideal. Decrease the value if you want higher quality (might not increase quality, while increases filesize)</br>
++ <i>compressionLevel</i> determines the used algorithm for encoding (0-13). Lower values will significantly increase the encoding time, but can further reduce the filesize. Default value is 6</br>
 
 Encoding will use all available CPU cores. This can't be reduced right now due to limitations in the SVT-AV1 encoding library. Use CPU affinities in task manager to reduce the maximum load.</br>
 
@@ -14,6 +14,12 @@ On an AMD Ryzen 5 5600X the speed is usually around 8-10 FPS, but that heavily d
 While using Nvidia's recorder with settings at 1440p, 120 FPS and 150 Mbps bitrate, the output is usually around 90 Mbps. After converting this with AV1 the result bitrate is 10 Mbps, while the perceivable quality degradation is negligible. Measurements made with SVT-AV1 v1.8.0.
 
 ## Usage
+Using the pre-installed method:
+1. Install ffmpeg with <code>winget install ffmpeg</code>
+2. Place the script to the root of your videos folder
+3. Run the AV1_Encoder.ps1 powershell script by right click -> Run with Powershell or inside a terminal
+
+Using the manual download method:
 1. Download the latest full ffmpeg package from https://www.gyan.dev/ffmpeg/builds/ffmpeg-git-full.7z</br>
    <i>or build your own ffmpeg for slightly faster file format detection (only the --enable-libsvtav1 and --enable-libopus flags are needed)</i>
 2. Extract both ffmpeg.exe and ffprobe.exe
@@ -35,6 +41,6 @@ C:\Video\
       - video_to_be_converted.mp4
       - ...
    - AV1_Encoder.ps1
-   - ffmpeg.exe
-   - ffprobe.exe
+   - ffmpeg.exe (optional)
+   - ffprobe.exe (optional)
 ```
